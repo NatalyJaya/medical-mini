@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -32,3 +32,15 @@ def create_symptom(symptom: schemas.SymptomCreate, db: Session = Depends(get_db)
 @app.get("/symptoms", response_model=List[schemas.SymptomResponse])
 def get_symptoms(db: Session = Depends(get_db)):
     return db.query(models.Symptom).all() #consulta select a través del ORM y devuelve todos los resultados
+
+@app.delete("/symptoms", response_model=schemas.SymptomResponse)
+def delete_symptoms(symptom_id: int, db: Session = Depends(get_db)):
+    symptom = db.query(models.Symptom).filter(models.Symptom.id == symptom_id).first()
+    
+    if symptom is None:
+        raise HTTPException(status_code=404, detail="Symptom not found")
+    
+    db.delete(symptom)
+    db.commit()
+    
+    return {"message": "Symptom deleted"}
